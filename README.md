@@ -199,6 +199,7 @@ AI Berkshire 确保：**同样的输入 → 结构一致、深度一致的输出
 | [`/industry-funnel`](skills/industry-funnel.md) | 行业漏斗筛选 | 全市场 → 粗筛 ≤10 家 → 终选 3 家深度分析 |
 | [`/quality-screen`](skills/quality-screen.md) | 去劣筛选（7条硬指标） | 快速排除非一流公司，支持个股/行业/指数/主题批量筛 |
 | [`/bottleneck-hunter`](skills/bottleneck-hunter.md) | 供应链瓶颈猎手 | 从超级趋势出发，寻找产业链物理瓶颈和套利机会 |
+| [`/era-alpha`](skills/era-alpha.md) | 时代α捕手 | 识别时代级高增长主线中的核心α，验证增长可持续性，给出介入与退出纪律 |
 | [`/investment-checklist`](skills/investment-checklist.md) | 巴菲特买入前 Checklist | 六关快速筛选，10分钟决定是否值得深入 |
 
 ### 📈 持仓管理类
@@ -654,6 +655,7 @@ REM 可选：安装 Codex slash prompts
 | 腾讯控股 (0700.HK) | `/investment-research` | 社交垄断+资本配置卓越，14x前瞻PE合理偏低 | [查看报告](reports/腾讯/) |
 | 7家公司对比 | `/investment-checklist` | 茅台、腾讯通过；英伟达、美团、快手有条件通过；拼多多、泡泡玛特灰色 | [查看报告](reports/多公司对比-checklist-20260408.md) |
 | 大师持仓追踪 | 自定义研究 | 巴菲特/李录/段永平最新13F持仓+PDD成本分析 | [查看报告](reports/大师持仓追踪-research-20260408.md) |
+| 折扣零售产业链 | `/industry-research` | 逻辑链6环中2环已证伪（尾货供给枯竭、线上量价齐升）；最佳环节是奥莱物业与消费REITs而非线上特卖平台 | [查看报告](reports/折扣零售产业链/) |
 
 > *更多报告将持续添加。欢迎 PR 提交你用本框架生成的研究报告。*
 
