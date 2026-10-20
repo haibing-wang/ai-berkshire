@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 """Generate Antigravity skills from AI Berkshire Claude command files.
 
-Transforms skills/*.md into skills_antigravity/*.md with YAML frontmatter
-and Antigravity adapter notes.
+Transforms skills/*.md into standard Antigravity skill directories:
+skills_antigravity/<skill_name>/skill.md with YAML frontmatter,
+adapter notes, and associated scripts in skills_antigravity/<skill_name>/scripts/.
 """
 
 from __future__ import annotations
 
 import re
+import shutil
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CLAUDE_SKILLS = ROOT / "skills"
 ANTIGRAVITY_SKILLS = ROOT / "skills_antigravity"
+TOOLS_DIR = ROOT / "tools"
 
 # Specific descriptions for core skills to provide optimal prompt trigger context
 SKILL_DESCRIPTIONS: dict[str, str] = {
@@ -34,31 +37,48 @@ SKILL_DESCRIPTIONS: dict[str, str] = {
     "income-investment": "股息收益投资：可持续与机会型现金流分红深度评估分析。",
     "bottleneck-hunter": "供应链瓶颈猎手：AI驱动的全球产业链瓶颈套利与卡脖子环节扫描。",
     "deep-company-series": "看懂XX公司（深度公司系列）：3-8篇深度长文拆解一家公司的商业底层逻辑与核心壁垒。",
-    "dyp-ask.md": "段永平问答：以本分、平常心、做对的事情与把事情做对的方式思考商业与投资。",
+    "dyp-ask": "段永平问答：以本分、平常心、做对的事情与把事情做对的方式思考商业与投资。",
     "financial-data": "财务数据获取与交叉验证规范：美股/港股/A股双独立信源核对标准。",
     "wechat-article": "微信公众号文章：作者-编辑-读者三Agent协作，产出高传播深度投研长文。",
 }
 
 # Specific report path guidelines for each skill
 SKILL_REPORT_PATHS: dict[str, str] = {
-    "investment-research": "reports_antigravity/{公司名}/{公司名}-research-{YYYYMMDD}.md",
-    "investment-team": "reports_antigravity/{公司名}/最终报告.md",
-    "investment-checklist": "reports_antigravity/{公司名}/{公司名}-checklist-{YYYYMMDD}.md",
-    "industry-research": "reports_antigravity/{行业名}-industry-{YYYYMMDD}.md",
-    "industry-funnel": "reports_antigravity/{行业名}-funnel-{YYYYMMDD}.md",
-    "private-company-research": "reports_antigravity/{公司名}/{公司名}-private-{YYYYMMDD}.md",
-    "earnings-review": "reports_antigravity/{公司名}/{公司名}-earnings-{期间}.md",
-    "earnings-team": "reports_antigravity/{公司名}/{公司名}-earnings-{期间}.md",
-    "management-deep-dive": "reports_antigravity/{公司名}/{公司名}-management-{YYYYMMDD}.md",
-    "news-pulse": "reports_antigravity/{公司名}/{公司名}-pulse-{YYYYMMDD}.md",
-    "portfolio-review": "reports_antigravity/portfolio-latest.md",
-    "quality-screen": "reports_antigravity/quality-screen-{YYYYMMDD}.md",
-    "thesis-tracker": "reports_antigravity/{公司名}/{公司名}-thesis.md",
-    "thesis-drift": "reports_antigravity/{公司名}/{公司名}-drift-{YYYYMMDD}.md",
-    "income-investment": "reports_antigravity/{公司名}/{公司名}-income-{YYYYMMDD}.md",
-    "bottleneck-hunter": "reports_antigravity/{赛道名}-bottleneck-{YYYYMMDD}.md",
-    "deep-company-series": "reports_antigravity/{公司名}/《看懂{公司名}》/第X篇.md",
-    "wechat-article": "reports_antigravity/wechat/{主题}-{YYYYMMDD}.md",
+    "investment-research": "reports/{公司名}/{公司名}-research-{YYYYMMDD}.md",
+    "investment-team": "reports/{公司名}/最终报告.md",
+    "investment-checklist": "reports/{公司名}/{公司名}-checklist-{YYYYMMDD}.md",
+    "industry-research": "reports/{行业名}-industry-{YYYYMMDD}.md",
+    "industry-funnel": "reports/{行业名}-funnel-{YYYYMMDD}.md",
+    "private-company-research": "reports/{公司名}/{公司名}-private-{YYYYMMDD}.md",
+    "earnings-review": "reports/{公司名}/{公司名}-earnings-{期间}.md",
+    "earnings-team": "reports/{公司名}/{公司名}-earnings-{期间}.md",
+    "management-deep-dive": "reports/{公司名}/{公司名}-management-{YYYYMMDD}.md",
+    "news-pulse": "reports/{公司名}/{公司名}-pulse-{YYYYMMDD}.md",
+    "portfolio-review": "reports/portfolio-latest.md",
+    "quality-screen": "reports/quality-screen-{YYYYMMDD}.md",
+    "thesis-tracker": "reports/{公司名}/{公司名}-thesis.md",
+    "thesis-drift": "reports/{公司名}/{公司名}-drift-{YYYYMMDD}.md",
+    "income-investment": "reports/{公司名}/{公司名}-income-{YYYYMMDD}.md",
+    "bottleneck-hunter": "reports/bottleneck-map/{赛道名}-bottleneck-{YYYYMMDD}.md",
+    "deep-company-series": "reports/{公司名}/《看懂{公司名}》/第X篇.md",
+    "wechat-article": "reports/wechat/{主题}-{YYYYMMDD}.md",
+}
+
+# Association of specific shared tools to skill packages
+SKILL_SCRIPTS: dict[str, list[str]] = {
+    "bottleneck-hunter": ["twstock_data.py"],
+    "financial-data": ["twstock_data.py", "ashare_data.py", "morningstar_fair_value.py"],
+    "investment-research": ["financial_rigor.py", "terminal_value.py", "report_audit.py"],
+    "earnings-review": ["financial_rigor.py", "report_audit.py", "twstock_data.py"],
+    "investment-checklist": ["financial_rigor.py"],
+    "quality-screen": ["stock_screener.py"],
+    "news-pulse": ["xueqiu_scraper.py"],
+    "dyp-ask": ["xueqiu_scraper.py"],
+    "portfolio-review": ["financial_rigor.py", "momentum_backtest.py"],
+    "thesis-drift": ["financial_rigor.py"],
+    "thesis-tracker": ["financial_rigor.py"],
+    "income-investment": ["financial_rigor.py", "report_audit.py"],
+    "industry-research": ["report_audit.py"],
 }
 
 
@@ -73,7 +93,7 @@ def split_frontmatter(text: str) -> tuple[str | None, str]:
 
 
 def first_heading(text: str, fallback: str) -> str:
-    """Extract first markdown heading text."""
+    """Extract first top-level Markdown heading as title fallback."""
     for line in text.splitlines():
         if line.startswith("# "):
             return line[2:].strip()
@@ -111,13 +131,19 @@ def antigravity_adapter_note(name: str) -> str:
     """Generate Antigravity Adapter Note tailored for this skill."""
     report_path = SKILL_REPORT_PATHS.get(
         name,
-        "reports_antigravity/{公司名}/{公司名}-research-{YYYYMMDD}.md",
+        "reports/{公司名}/{公司名}-research-{YYYYMMDD}.md",
     )
+    tools = SKILL_SCRIPTS.get(name, [])
+    if tools:
+        tool_desc = f"使用 `run_command` 执行本 Skill 专属脚本 `python3 skills_antigravity/{name}/scripts/...` 或根目录 `python3 tools/...`。"
+    else:
+        tool_desc = "使用 `run_command` 在工作区根目录下执行 `python3 tools/...`。"
+
     return (
         "## Antigravity Adapter Note\n"
         "- 将 $ARGUMENTS 视为用户在当前对话中指定的分析标的（如公司名称、美股/港股/A股代码）。\n"
         "- 网络数据收集时，优先使用 `search_web` 和 `read_url_content`，如遇到复杂页面可调用 `browser_subagent`。\n"
-        "- 校验工具调用：使用 `run_command` 在工作区根目录下执行 `python3 tools/...`。\n"
+        f"- 校验工具调用：{tool_desc}\n"
         f"- 报告产出路径：严格保存至 `{report_path}`，严禁写入 `~`。\n"
         "- 投研前务必使用 `date` 确认今日基准日期。\n\n"
     )
@@ -127,7 +153,7 @@ def transform_body(name: str, body: str) -> str:
     """Sanitize body text to align with Antigravity environment and directory layout."""
     report_path = SKILL_REPORT_PATHS.get(
         name,
-        "reports_antigravity/{公司名}/{公司名}-research-{YYYYMMDD}.md",
+        "reports/{公司名}/{公司名}-research-{YYYYMMDD}.md",
     )
     # Fix dangerous home directory writes (e.g. ~/[公司名]投资研究报告.md)
     body = re.sub(
@@ -135,8 +161,8 @@ def transform_body(name: str, body: str) -> str:
         report_path,
         body,
     )
-    # Replace references to reports/ output paths with reports_antigravity/
-    body = re.sub(r"\breports/", "reports_antigravity/", body)
+    # Ensure reports/ output paths are standard reports/
+    body = re.sub(r"\breports_antigravity/", "reports/", body)
     return body.rstrip() + "\n"
 
 
@@ -157,7 +183,9 @@ def main() -> None:
         source_text = source.read_text(encoding="utf-8")
         _, body = split_frontmatter(source_text)
 
-        target = ANTIGRAVITY_SKILLS / f"{name}.md"
+        target_dir = ANTIGRAVITY_SKILLS / name
+        target = target_dir / "skill.md"
+
         content = (
             metadata_for(name, source.name, source_text)
             + antigravity_adapter_note(name)
@@ -168,7 +196,20 @@ def main() -> None:
             if not target.exists() or target.read_text(encoding="utf-8") != content:
                 stale.append(str(target.relative_to(ROOT)))
         else:
+            target_dir.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
+
+            # Setup scripts directory and copy related tools if configured
+            scripts = SKILL_SCRIPTS.get(name, [])
+            if scripts:
+                scripts_dir = target_dir / "scripts"
+                scripts_dir.mkdir(parents=True, exist_ok=True)
+                for tool_name in scripts:
+                    tool_src = TOOLS_DIR / tool_name
+                    tool_dst = scripts_dir / tool_name
+                    if tool_src.exists() and not tool_dst.exists():
+                        shutil.copy2(tool_src, tool_dst)
+
         count += 1
 
     if check:

@@ -1,18 +1,43 @@
-# ===== 系统与工具产物 =====
-.DS_Store
-__pycache__/
-*.pyc
-.codex/
-/tmp/
-logs/command-log.jsonl
-reports_history/
-reports/
-reports_antigravity/
+# ===== 投研输出与个人记录（本地保留，不入库） =====
+/reports/
+/reports_history/
+/reports_antigravity/
+/output/
 /实盘记录/
 /筛选公司/
+# 根目录临时/单篇生成报告
+/*投资研究报告.md
+/*-research-*.md
 
-# 雪球爬虫登录态缓存（含 cookies，本地使用）
-/tmp/xueqiu_state.json
+# ===== 系统、环境与开发产物 =====
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# 编辑器与AI工具配置/缓存
+.vscode/
+.idea/
+*.swp
+*.swo
+.codex/
+
+# 临时目录（含雪球登录态缓存等本地状态）
+/tmp/
+
+# 日志产物（logs/ 目录结构由 logs/.gitignore 追踪保留）
+logs/command-log.jsonl
+logs/*.log
+logs/*.jsonl
 
 # ===== 音视频大文件不入库 =====
 # 如确需提交某个文件，用 git add -f 显式加入
@@ -34,8 +59,3 @@ assets/公司品牌图/
 .env.*
 *_token.txt
 *.token
-
-# 组合报告只存本地，不公开
-reports/portfolio-latest.md
-
-# 实盘记录/ 公开权重口径版；原始账本（含股数/金额）在 local/实盘记录-原始/（已被 /local/ 规则覆盖）
