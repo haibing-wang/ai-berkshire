@@ -201,5 +201,9 @@ Skill 包含的前置与后置质量约束：
 
 ```
 请按照 `skills_antigravity/investment-research.md` 的步骤分析“Arm Holding”
+请按照 `skills_antigravity/earnings-review.md` 的步骤分析“Arm Holding”
+
 请按照 `skills_antigravity/investment-research.md` 的步骤分析“NFLX”
+请按照 `skills_antigravity/earnings-review.md` 的步骤分析“NFLX”
+请按照 `skills_antigravity/deep-company-series.md` 的步骤分析“NFLX”
 ```
