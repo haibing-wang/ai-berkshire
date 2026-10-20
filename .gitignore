@@ -8,8 +8,8 @@ logs/command-log.jsonl
 reports_history/
 reports/
 reports_antigravity/
-实盘记录/
-筛选公司/
+/实盘记录/
+/筛选公司/
 
 # 雪球爬虫登录态缓存（含 cookies，本地使用）
 /tmp/xueqiu_state.json
